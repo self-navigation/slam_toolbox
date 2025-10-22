@@ -74,6 +74,7 @@ set(libraries
     toolbox_common
     SlamToolboxPlugin
     ceres_solver_plugin
+    decentralized_multirobot_slam_toolbox
     async_slam_toolbox
     sync_slam_toolbox
     localization_slam_toolbox
@@ -103,6 +104,7 @@ include_directories(include lib/karto_sdk/include
 add_definitions(${EIGEN3_DEFINITIONS})
 
 rosidl_generate_interfaces(${PROJECT_NAME}
+  msg/LocalizedLaserScan.msg
   srv/Pause.srv
   srv/Reset.srv
   srv/ClearQueue.srv
@@ -114,7 +116,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   srv/AddSubmap.srv
   srv/DeserializePoseGraph.srv
   srv/SerializePoseGraph.srv
-  DEPENDENCIES builtin_interfaces geometry_msgs std_msgs nav_msgs visualization_msgs
+  DEPENDENCIES builtin_interfaces geometry_msgs std_msgs nav_msgs visualization_msgs sensor_msgs
 )
 
 #### rviz Plugin
@@ -157,6 +159,11 @@ rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typ
 target_link_libraries(toolbox_common "${cpp_typesupport_target}")
 
 #### Mapping executibles
+add_library(decentralized_multirobot_slam_toolbox src/slam_toolbox_decentralized_multirobot.cpp)
+target_link_libraries(decentralized_multirobot_slam_toolbox toolbox_common kartoSlamToolbox ${Boost_LIBRARIES})
+add_executable(decentralized_multirobot_slam_toolbox_node src/slam_toolbox_decentralized_multirobot_node.cpp)
+target_link_libraries(decentralized_multirobot_slam_toolbox_node decentralized_multirobot_slam_toolbox)
+
 add_library(async_slam_toolbox src/slam_toolbox_async.cpp)
 target_link_libraries(async_slam_toolbox toolbox_common kartoSlamToolbox ${Boost_LIBRARIES})
 add_executable(async_slam_toolbox_node src/slam_toolbox_async_node.cpp)
@@ -203,7 +210,8 @@ rclcpp_components_register_nodes(lifelong_slam_toolbox "slam_toolbox::LifelongSl
 rclcpp_components_register_nodes(map_and_localization_slam_toolbox "slam_toolbox::MapAndLocalizationSlamToolbox")
 
 #### Install
-install(TARGETS async_slam_toolbox_node
+install(TARGETS decentralized_multirobot_slam_toolbox_node
+                async_slam_toolbox_node
                 sync_slam_toolbox_node
                 localization_slam_toolbox_node
                 map_and_localization_slam_toolbox_node
